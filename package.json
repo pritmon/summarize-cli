@@ -1,26 +1,44 @@
 {
   "name": "summarize-cli",
   "version": "1.0.0",
-  "description": "CLI tool to summarize any URL or local file using Claude",
+  "description": "CLI tool to summarize any URL or local file using Claude AI",
   "main": "dist/index.js",
   "bin": {
     "summarize": "./dist/index.js"
   },
   "scripts": {
     "build": "tsc",
-    "start": "node dist/index.js",
-    "dev": "ts-node src/index.ts"
+    "dev": "ts-node src/index.ts",
+    "lint": "eslint src/**/*.ts",
+    "format": "prettier --write src/**/*.ts",
+    "format:check": "prettier --check src/**/*.ts",
+    "prepublishOnly": "npm run lint && npm run build"
   },
+  "keywords": ["cli", "summarize", "claude", "anthropic", "ai", "pdf", "url"],
+  "author": "Pritam Mondal",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pritmon/summarize-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/pritmon/summarize-cli/issues"
+  },
+  "homepage": "https://github.com/pritmon/summarize-cli#readme",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
     "pdf-parse": "^1.1.1"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.58.0",
+    "@typescript-eslint/parser": "^8.58.0",
+    "eslint": "^10.2.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.8.1",
     "typescript": "^5.7.0"
   },
   "engines": {
     "node": ">=18.0.0"
-  },
-  "license": "MIT"
+  }
 }
