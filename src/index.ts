@@ -5,6 +5,8 @@ import * as fs from "fs";
 import * as https from "https";
 import * as http from "http";
 import * as path from "path";
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const pdfParse = require("pdf-parse") as (buf: Buffer) => Promise<{ text: string }>;
 
 const MODEL = "claude-opus-4-20250514";
 const MAX_CONTENT_CHARS = 100_000;
@@ -42,6 +44,11 @@ function fetchUrl(url: string): Promise<string> {
 }
 
 async function readFile(filePath: string): Promise<string> {
+  if (path.extname(filePath).toLowerCase() === ".pdf") {
+    const buffer = await fs.promises.readFile(filePath);
+    const data = await pdfParse(buffer);
+    return data.text;
+  }
   return fs.promises.readFile(filePath, "utf-8");
 }
 
