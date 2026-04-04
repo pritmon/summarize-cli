@@ -1,0 +1,25 @@
+{
+  "name": "summarize-cli",
+  "version": "1.0.0",
+  "description": "CLI tool to summarize any URL or local file using Claude",
+  "main": "dist/index.js",
+  "bin": {
+    "summarize": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "MIT"
+}
