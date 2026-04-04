@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>summarize — AI-powered summarization</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0a;
+      --surface: #111111;
+      --surface2: #1a1a1a;
+      --border: #2a2a2a;
+      --border-hover: #404040;
+      --accent: #7c6af7;
+      --accent-hover: #6b59e8;
+      --accent-glow: rgba(124, 106, 247, 0.15);
+      --text: #e8e8e8;
+      --text-muted: #888;
+      --text-dim: #555;
+      --success: #4ade80;
+      --error: #f87171;
+      --mono: "SF Mono", "Fira Code", "Cascadia Code", Consolas, monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 16px 80px;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 10px;
+    }
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+
+    /* Card */
+    .card {
+      width: 100%;
+      max-width: 640px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+    }
+    .tab {
+      flex: 1;
+      padding: 14px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 14px;
+      font-family: var(--sans);
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+    }
+    .tab:hover { color: var(--text); background: var(--surface2); }
+    .tab.active {
+      color: var(--accent);
+      border-bottom: 2px solid var(--accent);
+      margin-bottom: -1px;
+    }
+
+    /* Body */
+    .card-body { padding: 24px; }
+
+    /* Input */
+    .input-group { margin-bottom: 16px; }
+    .input-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 8px;
+      display: block;
+    }
+    .url-input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: var(--text);
+      font-size: 14px;
+      font-family: var(--mono);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .url-input::placeholder { color: var(--text-dim); }
+    .url-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    /* Drop zone */
+    .dropzone {
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      padding: 32px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s;
+      position: relative;
+    }
+    .dropzone:hover, .dropzone.drag-over {
+      border-color: var(--accent);
+      background: var(--accent-glow);
+    }
+    .dropzone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+    .dropzone-icon { font-size: 28px; margin-bottom: 8px; }
+    .dropzone-text { color: var(--text-muted); font-size: 14px; }
+    .dropzone-text strong { color: var(--accent); }
+    .file-name {
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--success);
+      font-family: var(--mono);
+      display: none;
+    }
+
+    /* Toggle */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+      padding: 12px 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .toggle {
+      position: relative;
+      width: 36px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: var(--border);
+      border-radius: 20px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .toggle-slider::before {
+      content: "";
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      left: 3px;
+      top: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: 0.2s;
+    }
+    .toggle input:checked + .toggle-slider { background: var(--accent); }
+    .toggle input:checked + .toggle-slider::before { transform: translateX(16px); }
+    .toggle-label { font-size: 13px; color: var(--text-muted); }
+    .toggle-label strong { color: var(--text); }
+
+    /* Button */
+    .btn {
+      width: 100%;
+      padding: 13px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      font-family: var(--sans);
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn:hover:not(:disabled) {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 20px var(--accent-glow);
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* Status bar */
+    .status-bar {
+      margin-top: 16px;
+      padding: 10px 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--text-muted);
+      display: none;
+      align-items: center;
+      gap: 8px;
+    }
+    .status-bar.visible { display: flex; }
+    .spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Output */
+    .output-card {
+      margin-top: 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      display: none;
+      width: 100%;
+      max-width: 640px;
+    }
+    .output-card.visible { display: block; }
+    .output-header {
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .output-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .output-title .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--success);
+      animation: pulse 1.5s infinite;
+    }
+    .output-title .dot.done { animation: none; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .copy-btn {
+      padding: 5px 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-muted);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: none;
+    }
+    .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .copy-btn.visible { display: block; }
+    .output-body {
+      padding: 20px;
+      font-family: var(--mono);
+      font-size: 14px;
+      line-height: 1.7;
+      color: #d4d4d4;
+      white-space: pre-wrap;
+      word-break: break-word;
+      min-height: 60px;
+    }
+    .output-body.error-state { color: var(--error); }
+
+    /* Source line */
+    .source-line {
+      padding: 10px 18px;
+      border-top: 1px solid var(--border);
+      font-size: 11px;
+      color: var(--text-dim);
+      font-family: var(--mono);
+      display: none;
+    }
+    .source-line.visible { display: block; }
+
+    /* Hidden */
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">✦</div>
+      summarize
+    </div>
+    <p class="subtitle">Summarize any URL or PDF in seconds — powered by Claude AI</p>
+  </div>
+
+  <div class="card">
+    <div class="tabs">
+      <button class="tab active" data-tab="url">
+        <span>🔗</span> URL
+      </button>
+      <button class="tab" data-tab="pdf">
+        <span>📄</span> PDF Upload
+      </button>
+    </div>
+
+    <div class="card-body">
+
+      <!-- URL Tab -->
+      <div id="tab-url" class="input-group">
+        <label class="input-label">Web Page URL</label>
+        <input
+          class="url-input"
+          type="url"
+          id="url-input"
+          placeholder="https://example.com/article"
+          autocomplete="off"
+          spellcheck="false"
+        />
+      </div>
+
+      <!-- PDF Tab -->
+      <div id="tab-pdf" class="input-group hidden">
+        <label class="input-label">PDF File</label>
+        <div class="dropzone" id="dropzone">
+          <input type="file" id="file-input" accept=".pdf" />
+          <div class="dropzone-icon">📂</div>
+          <div class="dropzone-text">
+            <strong>Click to upload</strong> or drag & drop a PDF
+          </div>
+          <div class="file-name" id="file-name"></div>
+        </div>
+      </div>
+
+      <!-- JSON Toggle -->
+      <div class="toggle-row">
+        <label class="toggle">
+          <input type="checkbox" id="json-toggle" />
+          <span class="toggle-slider"></span>
+        </label>
+        <span class="toggle-label"><strong>JSON output</strong> — structured data instead of bullets</span>
+      </div>
+
+      <!-- Submit -->
+      <button class="btn" id="submit-btn">
+        <span id="btn-text">Summarize</span>
+        <span>→</span>
+      </button>
+
+      <!-- Status -->
+      <div class="status-bar" id="status-bar">
+        <div class="spinner"></div>
+        <span id="status-text">Processing…</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Output -->
+  <div class="output-card" id="output-card">
+    <div class="output-header">
+      <div class="output-title">
+        <div class="dot" id="output-dot"></div>
+        <span id="output-title-text">Summary</span>
+      </div>
+      <button class="copy-btn" id="copy-btn">Copy</button>
+    </div>
+    <div class="output-body" id="output-body"></div>
+    <div class="source-line" id="source-line"></div>
+  </div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+
+    // Tab switching
+    let activeTab = "url";
+    document.querySelectorAll(".tab").forEach(tab => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+        tab.classList.add("active");
+        activeTab = tab.dataset.tab;
+        $("tab-url").classList.toggle("hidden", activeTab !== "url");
+        $("tab-pdf").classList.toggle("hidden", activeTab !== "pdf");
+      });
+    });
+
+    // Drag & drop
+    const dropzone = $("dropzone");
+    const fileInput = $("file-input");
+    let selectedFile = null;
+
+    dropzone.addEventListener("dragover", e => { e.preventDefault(); dropzone.classList.add("drag-over"); });
+    dropzone.addEventListener("dragleave", () => dropzone.classList.remove("drag-over"));
+    dropzone.addEventListener("drop", e => {
+      e.preventDefault();
+      dropzone.classList.remove("drag-over");
+      const file = e.dataTransfer.files[0];
+      if (file && file.type === "application/pdf") setFile(file);
+    });
+    fileInput.addEventListener("change", () => {
+      if (fileInput.files[0]) setFile(fileInput.files[0]);
+    });
+    function setFile(file) {
+      selectedFile = file;
+      const fn = $("file-name");
+      fn.textContent = `✓ ${file.name}`;
+      fn.style.display = "block";
+    }
+
+    // Submit
+    $("submit-btn").addEventListener("click", runSummarize);
+    $("url-input").addEventListener("keydown", e => { if (e.key === "Enter") runSummarize(); });
+
+    async function runSummarize() {
+      const jsonOutput = $("json-toggle").checked;
+      const btn = $("submit-btn");
+      const statusBar = $("status-bar");
+      const outputCard = $("output-card");
+      const outputBody = $("output-body");
+      const outputDot = $("output-dot");
+      const copyBtn = $("copy-btn");
+      const sourceLine = $("source-line");
+
+      // Reset
+      outputBody.textContent = "";
+      outputBody.classList.remove("error-state");
+      outputDot.classList.remove("done");
+      copyBtn.classList.remove("visible");
+      sourceLine.classList.remove("visible");
+      outputCard.classList.add("visible");
+      $("output-title-text").textContent = "Summary";
+
+      // Validate
+      const formData = new FormData();
+      if (activeTab === "pdf") {
+        if (!selectedFile) { showError("Please select a PDF file."); return; }
+        formData.append("file", selectedFile);
+      } else {
+        const url = $("url-input").value.trim();
+        if (!url) { showError("Please enter a URL."); return; }
+        formData.append("url", url);
+      }
+      formData.append("json", jsonOutput ? "true" : "false");
+
+      btn.disabled = true;
+      $("btn-text").textContent = "Summarizing…";
+      statusBar.classList.add("visible");
+      $("status-text").textContent = "Starting…";
+
+      let fullText = "";
+
+      try {
+        const response = await fetch("/api/summarize", { method: "POST", body: formData });
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let currentEvent = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+
+          const lines = buffer.split("\n");
+          buffer = lines.pop() ?? "";
+
+          for (const line of lines) {
+            if (line.startsWith("event:")) {
+              currentEvent = line.slice(6).trim();
+            } else if (line.startsWith("data:")) {
+              const data = JSON.parse(line.slice(5).trim());
+              handleEvent(currentEvent, data);
+            }
+          }
+        }
+      } catch (err) {
+        showError(err.message || "Request failed.");
+      } finally {
+        btn.disabled = false;
+        $("btn-text").textContent = "Summarize";
+        statusBar.classList.remove("visible");
+      }
+
+      function handleEvent(event, data) {
+        switch (event) {
+          case "status":
+            $("status-text").textContent = data;
+            break;
+          case "chunk":
+            fullText += data;
+            outputBody.textContent = fullText;
+            break;
+          case "result":
+            try {
+              const parsed = JSON.parse(data);
+              fullText = JSON.stringify(parsed, null, 2);
+              outputBody.textContent = fullText;
+              $("output-title-text").textContent = "JSON Output";
+            } catch {
+              outputBody.textContent = data;
+            }
+            outputDot.classList.add("done");
+            copyBtn.classList.add("visible");
+            break;
+          case "done":
+            outputDot.classList.add("done");
+            copyBtn.classList.add("visible");
+            if (data) {
+              sourceLine.textContent = `source: ${data}`;
+              sourceLine.classList.add("visible");
+            }
+            break;
+          case "error":
+            showError(data);
+            break;
+        }
+      }
+    }
+
+    function showError(msg) {
+      const outputCard = $("output-card");
+      const outputBody = $("output-body");
+      outputCard.classList.add("visible");
+      outputBody.classList.add("error-state");
+      outputBody.textContent = `Error: ${msg}`;
+      $("output-dot").classList.add("done");
+      $("status-bar").classList.remove("visible");
+      $("submit-btn").disabled = false;
+      $("btn-text").textContent = "Summarize";
+    }
+
+    // Copy
+    $("copy-btn").addEventListener("click", () => {
+      const text = $("output-body").textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        $("copy-btn").textContent = "Copied!";
+        setTimeout(() => { $("copy-btn").textContent = "Copy"; }, 2000);
+      });
+    });
+  </script>
+</body>
+</html>

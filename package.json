@@ -9,6 +9,8 @@
   "scripts": {
     "build": "tsc",
     "dev": "ts-node src/index.ts",
+    "dev:server": "ts-node-dev --respawn src/server.ts",
+    "start": "node dist/server.js",
     "lint": "eslint src/**/*.ts",
     "format": "prettier --write src/**/*.ts",
     "format:check": "prettier --check src/**/*.ts",
@@ -35,16 +37,24 @@
   "homepage": "https://github.com/pritmon/summarize-cli#readme",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.0",
+    "express": "^5.2.1",
+    "multer": "^2.1.1",
     "pdf-parse": "^1.1.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/multer": "^2.1.0",
     "@types/node": "^22.0.0",
     "@typescript-eslint/eslint-plugin": "^8.58.0",
     "@typescript-eslint/parser": "^8.58.0",
     "eslint": "^10.2.0",
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.8.1",
+    "ts-node-dev": "^2.0.0",
     "typescript": "^5.7.0",
     "typescript-eslint": "^8.58.0"
   },
