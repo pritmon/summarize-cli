@@ -5,7 +5,6 @@ import path from "path";
 import Anthropic from "@anthropic-ai/sdk";
 import { fetchUrl } from "./fetcher";
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdfParse = require("pdf-parse") as (buf: Buffer) => Promise<{ text: string }>;
 
 const app = express();
@@ -27,6 +26,7 @@ app.post("/api/summarize", upload.single("file"), async (req: Request, res: Resp
     res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
 
   const jsonOutput = req.body.json === "true" || req.body.json === true;
+  const temperature = Math.min(1, Math.max(0, parseFloat(req.body.temperature) || 0.6));
   let content: string;
   let source: string;
 
@@ -84,6 +84,7 @@ Use the • character to start each bullet. No preamble, no closing remarks.`;
       const message = await client.messages.create({
         model: MODEL,
         max_tokens: 1024,
+        temperature,
         system: systemPrompt,
         messages: [{ role: "user", content: userMessage }],
       });
@@ -102,6 +103,7 @@ Use the • character to start each bullet. No preamble, no closing remarks.`;
       const stream = client.messages.stream({
         model: MODEL,
         max_tokens: 1024,
+        temperature,
         system: systemPrompt,
         messages: [{ role: "user", content: userMessage }],
       });

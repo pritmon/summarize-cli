@@ -217,6 +217,88 @@
     .toggle-label { font-size: 13px; color: var(--text-muted); }
     .toggle-label strong { color: var(--text); }
 
+    /* Temperature */
+    .temp-row {
+      margin-bottom: 16px;
+      padding: 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .temp-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .temp-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+    .temp-badge {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: var(--accent-glow);
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      transition: all 0.2s;
+    }
+    .temp-presets {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .temp-preset {
+      flex: 1;
+      padding: 7px 4px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-family: var(--sans);
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: center;
+    }
+    .temp-preset:hover { border-color: var(--border-hover); color: var(--text); }
+    .temp-preset.active { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+    .temp-slider-wrap { position: relative; }
+    input[type="range"] {
+      width: 100%;
+      -webkit-appearance: none;
+      height: 4px;
+      border-radius: 4px;
+      background: var(--border);
+      outline: none;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      box-shadow: 0 0 0 3px var(--accent-glow);
+      transition: box-shadow 0.15s;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover {
+      box-shadow: 0 0 0 5px var(--accent-glow);
+    }
+    .temp-scale {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+
     /* Button */
     .btn {
       width: 100%;
@@ -401,6 +483,27 @@
         <span class="toggle-label"><strong>JSON output</strong> — structured data instead of bullets</span>
       </div>
 
+      <!-- Temperature -->
+      <div class="temp-row">
+        <div class="temp-header">
+          <span class="temp-label">🌡️ Temperature</span>
+          <span class="temp-badge" id="temp-badge">⚖️ Balanced — 0.6</span>
+        </div>
+        <div class="temp-presets">
+          <button class="temp-preset" data-value="0.3">🎯 Precise</button>
+          <button class="temp-preset active" data-value="0.6">⚖️ Balanced</button>
+          <button class="temp-preset" data-value="1.0">🎨 Creative</button>
+        </div>
+        <div class="temp-slider-wrap">
+          <input type="range" id="temp-slider" min="0" max="1" step="0.1" value="0.6" />
+          <div class="temp-scale">
+            <span>0.0 — Precise</span>
+            <span>0.5</span>
+            <span>1.0 — Creative</span>
+          </div>
+        </div>
+      </div>
+
       <!-- Submit -->
       <button class="btn" id="submit-btn">
         <span id="btn-text">Summarize</span>
@@ -467,12 +570,36 @@
       fn.style.display = "block";
     }
 
+    // Temperature slider
+    const tempSlider = $("temp-slider");
+    const tempBadge = $("temp-badge");
+    const presetLabels = { "0.3": "🎯 Precise", "0.6": "⚖️ Balanced", "1.0": "🎨 Creative" };
+
+    function updateTempUI(val) {
+      const v = parseFloat(val).toFixed(1);
+      const label = presetLabels[v] || "🌡️ Custom";
+      tempBadge.textContent = `${label} — ${v}`;
+      document.querySelectorAll(".temp-preset").forEach(p => {
+        p.classList.toggle("active", p.dataset.value === v);
+      });
+    }
+
+    tempSlider.addEventListener("input", () => updateTempUI(tempSlider.value));
+
+    document.querySelectorAll(".temp-preset").forEach(btn => {
+      btn.addEventListener("click", () => {
+        tempSlider.value = btn.dataset.value;
+        updateTempUI(btn.dataset.value);
+      });
+    });
+
     // Submit
     $("submit-btn").addEventListener("click", runSummarize);
     $("url-input").addEventListener("keydown", e => { if (e.key === "Enter") runSummarize(); });
 
     async function runSummarize() {
-      gtag('event', 'summarize_click', { tab: activeTab, json_output: $("json-toggle").checked });
+      const temperature = parseFloat($("temp-slider").value);
+      gtag('event', 'summarize_click', { tab: activeTab, json_output: $("json-toggle").checked, temperature });
       const jsonOutput = $("json-toggle").checked;
       const btn = $("submit-btn");
       const statusBar = $("status-bar");
@@ -502,6 +629,7 @@
         formData.append("url", url);
       }
       formData.append("json", jsonOutput ? "true" : "false");
+      formData.append("temperature", temperature.toString());
 
       btn.disabled = true;
       $("btn-text").textContent = "Summarizing…";
