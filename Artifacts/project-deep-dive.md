@@ -356,6 +356,74 @@ Append each "chunk" text to output <div>
 
 ---
 
+## 1️⃣3️⃣ Temperature Control
+
+**Q: What is temperature in an AI model?**
+
+> Temperature controls **randomness and creativity** of the output.
+
+```diff
+- Temperature 0.0  →  fully deterministic, same output every time
++ Temperature 0.3  →  focused, factual, minimal variation ✅ best for summarization
+  Temperature 0.6  →  balanced (default in this app)
+  Temperature 1.0  →  creative, varied, unpredictable
+```
+
+---
+
+**Q: Why did you expose temperature as a UI control instead of hardcoding it?**
+
+> [!IMPORTANT]
+> Three reasons:
+> 1. **Different use cases need different values** — a doctor summarizing a medical PDF wants precision (0.3), a writer summarizing for inspiration wants creativity (1.0)
+> 2. **Shows understanding of AI internals** — not just "call the API", but understand what the parameters do
+> 3. **Better user experience** — power users can tune the output without touching code
+
+---
+
+**Q: How does the temperature flow from UI to API?**
+
+```
+User moves slider / clicks preset
+    ↓
+JS reads value → appended to FormData
+    ↓
+POST /api/summarize (multipart form)
+    ↓
+Server parses: parseFloat(req.body.temperature)
+    ↓
+Clamped to 0.0–1.0 range (security)
+    ↓
+Passed directly to Claude API: { temperature: 0.6 }
+```
+
+---
+
+**Q: Why did you clamp the temperature value on the server?**
+
+> [!WARNING]
+> Never trust frontend input. A user could manually send `temperature: 999` via API.
+> Server-side clamping: `Math.min(1, Math.max(0, value))` ensures it's always valid.
+
+---
+
+**Q: What are the 3 presets and their values?**
+
+| Preset | Value | Best for |
+|--------|-------|---------|
+| 🎯 Precise | 0.3 | Medical, legal, technical documents |
+| ⚖️ Balanced | 0.6 | General articles, news, reports |
+| 🎨 Creative | 1.0 | Blogs, creative writing, brainstorming |
+
+---
+
+**Q: Does temperature affect the JSON output mode differently?**
+
+> [!NOTE]
+> Yes — in JSON mode, a high temperature (1.0) can cause Claude to return malformed JSON since it becomes less consistent. For JSON mode, **0.3 is strongly recommended**. This is a known tradeoff worth mentioning.
+
+---
+
 ## 🃏 Flash Cards — Quick Fire Round
 
 > [!TIP]
@@ -375,6 +443,10 @@ Append each "chunk" text to output <div>
 | How to handle client disconnect? | req.on('close') → stream.abort() |
 | Why no React on the frontend? | One page, one button — overkill |
 | What's the SSRF risk? | Server fetches internal IPs if not validated |
+| What is temperature in AI? | Controls randomness — 0.0 precise, 1.0 creative |
+| Why expose temperature in UI? | Different use cases need different values |
+| Why clamp temperature on server? | Never trust frontend input — user can send any value |
+| Best temperature for JSON mode? | 0.3 — high temp causes malformed JSON |
 
 ---
 
