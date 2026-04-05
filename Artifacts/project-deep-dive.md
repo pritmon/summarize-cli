@@ -424,6 +424,94 @@ Passed directly to Claude API: { temperature: 0.6 }
 
 ---
 
+## 1️⃣4️⃣ Rate Limiting
+
+**Q: What is API rate limiting?**
+
+> [!NOTE]
+> Rate limiting is a restriction set by the API provider on how many requests you can make in a given time window. It protects their servers from overload and controls costs.
+
+```
+Too many requests in a short time
+    ↓
+API returns HTTP 429 (Too Many Requests)
+    ↓
+App catches it → shows "Rate limit exceeded. Wait a moment."
+```
+
+---
+
+**Q: What are Anthropic's free tier rate limits?**
+
+| Limit | Free Tier |
+|-------|-----------|
+| Requests per minute | ~5 |
+| Tokens per minute | ~20,000 |
+| Tokens per day | ~300,000 |
+
+> [!WARNING]
+> Testing all 3 temperature presets back-to-back (3 requests in <30 seconds) is enough to hit the per-minute limit on free tier.
+
+---
+
+**Q: How does your app handle rate limit errors?**
+
+```typescript
+} else if (err instanceof Anthropic.RateLimitError) {
+  send("error", "Rate limit exceeded. Wait a moment and try again.");
+}
+```
+
+> [!TIP]
+> The app **catches it gracefully** using Anthropic SDK's typed error classes — no crash, no stack trace shown to user, just a clean message. This is proper production error handling.
+
+---
+
+**Q: What's the difference between a rate limit error and an auth error?**
+
+```diff
+- HTTP 401 AuthenticationError  →  wrong or expired API key
+- HTTP 429 RateLimitError       →  too many requests, wait and retry
+- HTTP 5xx APIError             →  Anthropic server-side issue
+```
+
+> Each is caught separately in the code and shows a specific message — not a generic "something went wrong."
+
+---
+
+**Q: How would you fix rate limiting in production?**
+
+> [!IMPORTANT]
+> Three strategies:
+
+| Strategy | How | When to use |
+|----------|-----|-------------|
+| **Retry with backoff** | Wait 1s, 2s, 4s then retry automatically | Low traffic apps |
+| **Queue requests** | Line up requests, process one at a time | Medium traffic |
+| **Rate limit users** | Limit each IP to N requests/minute | Public apps |
+
+> For this project, the right next step is adding `express-rate-limit` middleware to protect the `/api/summarize` endpoint from abuse.
+
+---
+
+**Q: How would you add rate limiting to this app?**
+
+```typescript
+import rateLimit from "express-rate-limit";
+
+const limiter = rateLimit({
+  windowMs: 60 * 1000,  // 1 minute
+  max: 5,               // 5 requests per minute per IP
+  message: "Too many requests. Please wait a minute."
+});
+
+app.use("/api/summarize", limiter);
+```
+
+> Install with: `npm install express-rate-limit`
+
+---
+
 ## 🃏 Flash Cards — Quick Fire Round
 
 > [!TIP]
@@ -447,6 +535,11 @@ Passed directly to Claude API: { temperature: 0.6 }
 | Why expose temperature in UI? | Different use cases need different values |
 | Why clamp temperature on server? | Never trust frontend input — user can send any value |
 | Best temperature for JSON mode? | 0.3 — high temp causes malformed JSON |
+| What HTTP code is rate limit? | 429 Too Many Requests |
+| How does app handle rate limit? | Catches RateLimitError → clean user message |
+| What's the free tier request limit? | ~5 requests per minute |
+| How to add rate limiting to app? | express-rate-limit middleware on the route |
+| Difference: 401 vs 429? | 401 = wrong API key, 429 = too many requests |
 
 ---
 
