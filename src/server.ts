@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 3000;
 const MODEL = "claude-opus-4-20250514";
 const MAX_CONTENT_CHARS = 100_000;
 
-app.use(express.json());
+app.use(express.json({ limit: "1mb" }));
 app.use(express.static(path.join(__dirname, "../public")));
 
 app.post("/api/summarize", upload.single("file"), async (req: Request, res: Response) => {
@@ -32,6 +32,11 @@ app.post("/api/summarize", upload.single("file"), async (req: Request, res: Resp
 
   try {
     if (req.file) {
+      if (req.file.mimetype !== "application/pdf" && !req.file.originalname.toLowerCase().endsWith(".pdf")) {
+        send("error", "Only PDF files are supported.");
+        res.end();
+        return;
+      }
       source = req.file.originalname;
       const parsed = await pdfParse(req.file.buffer);
       content = parsed.text;

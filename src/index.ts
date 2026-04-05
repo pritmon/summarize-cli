@@ -44,4 +44,7 @@ async function main(): Promise<void> {
   await summarise(content, source, jsonOutput);
 }
 
-main();
+main().catch((err) => {
+  process.stderr.write(`\x1b[31mUnexpected error:\x1b[0m ${err instanceof Error ? err.message : String(err)}\n`);
+  process.exit(1);
+});

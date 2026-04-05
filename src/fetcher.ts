@@ -1,7 +1,9 @@
 import * as https from "https";
 import * as http from "http";
 
-export function fetchUrl(url: string): Promise<string> {
+const MAX_REDIRECTS = 10;
+
+export function fetchUrl(url: string, redirectCount = 0): Promise<string> {
   return new Promise((resolve, reject) => {
     const protocol = url.startsWith("https://") ? https : http;
     const req = protocol.get(url, (res) => {
@@ -11,7 +13,11 @@ export function fetchUrl(url: string): Promise<string> {
         res.statusCode < 400 &&
         res.headers.location
       ) {
-        fetchUrl(res.headers.location).then(resolve).catch(reject);
+        if (redirectCount >= MAX_REDIRECTS) {
+          reject(new Error("Too many redirects (max 10)"));
+          return;
+        }
+        fetchUrl(res.headers.location, redirectCount + 1).then(resolve).catch(reject);
         return;
       }
       if (res.statusCode !== undefined && res.statusCode >= 400) {

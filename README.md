@@ -39,7 +39,7 @@ $ summarize ./report.pdf
 
 ## Requirements
 
-- Node.js ≥ 18
+- Node.js ≥ 20
 - An [Anthropic API key](https://console.anthropic.com/)
 
 ---
@@ -176,12 +176,15 @@ summarize-cli/
 │   ├── cli.ts          # Argument parsing & help text
 │   ├── fetcher.ts      # HTTP/HTTPS URL fetching
 │   ├── reader.ts       # File reading (text + PDF)
-│   └── summarize.ts    # Anthropic API & streaming
+│   ├── summarize.ts    # Anthropic API & streaming
+│   └── server.ts       # Express web server & SSE API
 ├── .github/
 │   └── workflows/
-│       └── ci.yml      # GitHub Actions CI (Node 18/20/22)
+│       └── ci.yml      # GitHub Actions CI (Node 20/22)
+├── public/
+│   └── index.html      # Web UI (URL/PDF tabs, temperature slider)
 ├── dist/               # Compiled output (generated)
-├── .eslintrc.json
+├── eslint.config.mjs
 ├── .prettierrc
 ├── tsconfig.json
 ├── package.json
