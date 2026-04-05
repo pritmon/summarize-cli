@@ -3,9 +3,11 @@
 > Summarize any URL, text file, or PDF in seconds — powered by Claude AI.
 
 [![CI](https://github.com/pritmon/summarize-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/pritmon/summarize-cli/actions/workflows/ci.yml)
-[![Node.js](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](https://nodejs.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/built%20with-TypeScript-blue)](https://www.typescriptlang.org/)
+
+**[Try live demo →](https://summarize-cli.onrender.com)**
 
 ---
 
