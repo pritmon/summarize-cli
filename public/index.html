@@ -4,6 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>summarize — AI-powered summarization</title>
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-7NGN83C2M9"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-7NGN83C2M9');
+  </script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -464,6 +472,7 @@
     $("url-input").addEventListener("keydown", e => { if (e.key === "Enter") runSummarize(); });
 
     async function runSummarize() {
+      gtag('event', 'summarize_click', { tab: activeTab, json_output: $("json-toggle").checked });
       const jsonOutput = $("json-toggle").checked;
       const btn = $("submit-btn");
       const statusBar = $("status-bar");
